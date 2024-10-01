@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor de Productos - Kevin Cornelio</title>
+  <style>
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+
+    h1, h2 {
+      color: #007bff;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table, th, td {
+      border: 1px solid #007bff;
+    }
+
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+
+    td {
+      background-color: #f9f9f9;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    input, select {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #007bff;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 8px 15px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+  </style>
+</head>
+<body>
+  <h1>Gestor de Productos - Kevin Cornelio</h1>
+
+  <h2>Agregar Rubro</h2>
+  <input type="text" id="rubroInput" placeholder="Nombre del rubro">
+  <button onclick="agregarRubro()">Agregar Rubro</button>
+  <select id="rubroSelect"></select>
+
+  <h2>Agregar Producto</h2>
+  <input type="text" id="nombreInput" placeholder="Nombre del producto">
+  <input type="number" id="precioInput" placeholder="Precio">
+  <input type="number" id="stockInput" placeholder="Stock">
+  <button onclick="agregarProducto()">Agregar Producto</button>
+
+  <h2>Lista de Productos</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Stock</th>
+        <th>Rubro</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="productoTableBody">
+    </tbody>
+  </table>
+
+  <script>
+    // Inicialización de arrays para rubros y productos desde localStorage
+    let listaRubros = JSON.parse(localStorage.getItem('rubros')) || [];
+    let listaProductos = JSON.parse(localStorage.getItem('productos')) || [];
+
+    // Obtener referencias a los elementos del DOM
+    const inputRubro = document.getElementById('rubroInput');
+    const selectRubro = document.getElementById('rubroSelect');
+    const inputNombre = document.getElementById('nombreInput');
+    const inputPrecio = document.getElementById('precioInput');
+    const inputStock = document.getElementById('stockInput');
+    const tablaProductos = document.getElementById('productoTableBody');
+
+    // Cargar rubros y productos al inicio
+    actualizarRubros();
+    actualizarProductos();
+
+    // Función para agregar un nuevo rubro
+    function agregarRubro() {
+      const nuevoRubro = inputRubro.value.trim();
+      if (!nuevoRubro) {
+        alert('Por favor, ingrese un nombre de rubro válido.');
+        return;
+      }
+
+      if (listaRubros.includes(nuevoRubro)) {
+        alert('El rubro ya existe.');
+      } else {
+        listaRubros.push(nuevoRubro);
+        localStorage.setItem('rubros', JSON.stringify(listaRubros));
+        actualizarRubros();
+      }
+
+      limpiarCampos(inputRubro);
+    }
+
+    // Función para actualizar el select de rubros
+    function actualizarRubros() {
+      selectRubro.innerHTML = ''; // Limpiar las opciones anteriores
+      listaRubros.forEach(rubro => {
+        const opcion = document.createElement('option');
+        opcion.value = rubro;
+        opcion.textContent = rubro;
+        selectRubro.appendChild(opcion); // Agregar cada rubro al select
+      });
+    }
+
+    // Función para agregar un nuevo producto
+    function agregarProducto() {
+      const nombreProducto = inputNombre.value.trim();
+      const precioProducto = parseFloat(inputPrecio.value);
+      const stockProducto = parseInt(inputStock.value);
+      const rubroSeleccionado = selectRubro.value;
+
+      if (!nombreProducto || isNaN(precioProducto) || isNaN(stockProducto) || !rubroSeleccionado) {
+        alert("Todos los campos son obligatorios y deben contener valores válidos.");
+        return;
+      }
+
+      const productoNuevo = { nombre: nombreProducto, precio: precioProducto, stock: stockProducto, rubro: rubroSeleccionado };
+      listaProductos.push(productoNuevo);
+      localStorage.setItem('productos', JSON.stringify(listaProductos));
+      
+      actualizarProductos();
+      limpiarCampos(inputNombre, inputPrecio, inputStock);
+    }
+
+    // Función para actualizar la tabla de productos
+    function actualizarProductos() {
+      tablaProductos.innerHTML = ''; // Limpiar la tabla antes de agregar los productos
+      listaProductos.forEach((producto, indice) => {
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+          <td>${producto.nombre}</td>
+          <td>$${producto.precio.toFixed(2)}</td>
+
+          <td>${producto.stock}</td>
+          <td>${producto.rubro}</td>
+          <td>
+            <button onclick="modificarProducto(${indice})">Modificar</button>
+            <button onclick="borrarProducto(${indice})">Eliminar</button>
+          </td>
+        `;
+        tablaProductos.appendChild(fila); // Agregar cada fila a la tabla
+      });
+    }
+
+    // Función para eliminar un producto
+    function borrarProducto(indice) {
+      listaProductos.splice(indice, 1);
+      localStorage.setItem('productos', JSON.stringify(listaProductos));
+      actualizarProductos();
+    }
+
+    // Función para modificar un producto existente
+    function modificarProducto(indice) {
+      const producto = listaProductos[indice];
+      inputNombre.value = producto.nombre;
+      inputPrecio.value = producto.precio;
+      inputStock.value = producto.stock;
+      selectRubro.value = producto.rubro;
+
+      // Remover temporalmente el producto para editar
+      borrarProducto(indice);
+    }
+
+    // Función para limpiar campos
+    function limpiarCampos(...inputs) {
+      inputs.forEach(input => input.value = '');
+    }
+</script>
+
+</body>
+</html>
